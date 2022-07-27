@@ -1,4 +1,4 @@
-package com.example.mymemo
+package com.example.mymemo.view
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -17,12 +17,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyMemoTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    NavGraph()
                 }
             }
         }
