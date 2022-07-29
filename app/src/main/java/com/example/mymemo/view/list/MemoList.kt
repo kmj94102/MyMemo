@@ -17,13 +17,23 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mymemo.R
+import com.example.mymemo.data.MemoEntity
 import com.example.mymemo.ui.theme.*
+import com.example.mymemo.util.getMainColor
+import com.example.mymemo.util.getSubColor
 import com.example.mymemo.view.RouteAction
 import kotlin.random.Random
 
 @Composable
-fun MemoListContainer(routeAction: RouteAction) {
+fun MemoListContainer(
+    routeAction: RouteAction,
+    viewModel: MemoListViewModel = hiltViewModel()
+) {
+
+    val list = viewModel.list.collectAsState()
+    viewModel.selectAllMemo()
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -72,9 +82,9 @@ fun MemoListContainer(routeAction: RouteAction) {
             item {
                 Spacer(modifier = Modifier.height(10.dp))
 
-                (0..10).forEach { _ ->
-                    MemoItem(modifier = Modifier.fillMaxWidth()) {
-                        routeAction.navToDetail()
+                list.value.forEach { entity ->
+                    MemoItem(memoEntity = entity, modifier = Modifier.fillMaxWidth()) {
+                        routeAction.navToDetail(it)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
                 }
@@ -104,14 +114,16 @@ fun InputBar(
     modifier: Modifier = Modifier,
     field: String,
     hint: String,
-    isSingleLine : Boolean = true,
+    borderColor: Color = Black,
+    containerColor: Color = Gray,
+    isSingleLine: Boolean = true,
     listener: (String) -> Unit
 ) {
     Card(
         shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, Color.Black),
+        border = BorderStroke(1.dp, borderColor),
         colors = CardDefaults.cardColors(
-            containerColor = Gray
+            containerColor = containerColor
         ),
         modifier = modifier
             .fillMaxWidth()
@@ -123,7 +135,7 @@ fun InputBar(
             },
             singleLine = isSingleLine,
             placeholder = {
-                Text(text = hint)
+                Text(text = hint, color = Color(0x80000000))
             },
             colors = TextFieldDefaults.textFieldColors(
                 // TextField UnderLine 제거
@@ -164,37 +176,48 @@ fun CustomChip(
 /** 메모 아이템 **/
 @Composable
 fun MemoItem(
+    memoEntity: MemoEntity,
     modifier: Modifier = Modifier,
-    clickListener: () -> Unit
+    clickListener: (Long) -> Unit
 ) {
 
-    // todo 임시 수정 예정
-    val colorList = listOf(
-        Color(0xFFF37878),
-        Color(0xFFF8BB54),
-        Color(0xFF96E263),
-        Color(0xFFFFE924),
-    )
-    val lightColorList = listOf(
-        Color(0xFFFFBEBE),
-        Color(0xFFFAD9A1),
-        Color(0xFFD9F8C4),
-        Color(0xFFFCFF79),
-    )
-    val random = Random.nextInt(0, 4)
+    if (memoEntity.isSecret) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            modifier = modifier
+                .height(65.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Gray)
+                .clickable {
+                    // todo 다이얼로그
+                }
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.ic_lock),
+                contentDescription = "lock",
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "비밀메모 입니다.",
+                style = Typography.bodyLarge
+            )
+        }
+        return
+    }
 
     Box(
         modifier = modifier
             .height(65.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(lightColorList[random])
-            .clickable { clickListener() }
+            .background(Color(getSubColor(memoEntity.colorGroup)))
+            .clickable { clickListener(memoEntity.index) }
     ) {
         Box(
             modifier = Modifier
                 .width(20.dp)
                 .fillMaxHeight()
-                .background(colorList[random])
+                .background(Color(getMainColor(memoEntity.colorGroup)))
         )
 
         Column(
@@ -204,7 +227,7 @@ fun MemoItem(
                 .padding(start = 30.dp, top = 10.dp, end = 10.dp, bottom = 10.dp)
         ) {
             Text(
-                text = "한줄 제목이 들어오는 곳입니다...ㅎㅎ",
+                text = memoEntity.title,
                 maxLines = 1,
                 style = Typography.bodyLarge,
             )
@@ -226,13 +249,13 @@ fun MemoItem(
 
                 Image(
                     painter = painterResource(id = R.drawable.ic_trash),
-                    contentDescription = "star",
+                    contentDescription = "trash",
                     modifier = Modifier
                         .size(24.dp)
                 )
 
                 Image(
-                    painter = painterResource(id = R.drawable.ic_star),
+                    painter = painterResource(id = if (memoEntity.isImportance) R.drawable.ic_star_fill else R.drawable.ic_star),
                     contentDescription = "star",
                     modifier = Modifier
                         .size(24.dp)

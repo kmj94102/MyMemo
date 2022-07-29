@@ -11,7 +11,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.mymemo.ui.theme.MyMemoTheme
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,16 +29,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-@Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    MyMemoTheme {
-        Greeting("Android")
-    }
-}
+//    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.loading))
+//    val progress by animateLottieCompositionAsState(
+//        composition = composition,
+//        isPlaying = true,
+//        iterations = LottieConstants.IterateForever,
+//        speed = 0.5f
+//    )
+//
+//    if (isShow) {
+//        LottieAnimation(
+//            composition = composition,
+//            progress = { progress },
+//            modifier = Modifier.padding(horizontal = 25.dp)
+//        )
+//    }

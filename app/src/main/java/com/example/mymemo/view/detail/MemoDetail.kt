@@ -12,23 +12,36 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mymemo.R
 import com.example.mymemo.ui.theme.Black
 import com.example.mymemo.ui.theme.Typography
 import com.example.mymemo.ui.theme.White
+import com.example.mymemo.util.getMainColor
+import com.example.mymemo.util.getSubColor
+import com.example.mymemo.util.toast
 import com.example.mymemo.view.RouteAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MemoDetailContainer(routeAction: RouteAction) {
+fun MemoDetailContainer(
+    routeAction: RouteAction,
+    index: Long?,
+    viewModel: DetailViewModel = hiltViewModel()
+) {
 
-    var isImportance by remember {
-        mutableStateOf(false)
+    if (index == null) {
+        routeAction.popupBackStack()
+        return
     }
+
+    val statusState = viewModel.statusState.collectAsState()
+    val context = LocalContext.current
 
     Box(
         modifier = Modifier
@@ -47,112 +60,126 @@ fun MemoDetailContainer(routeAction: RouteAction) {
                 }
         ) // 뒤로가기 버튼
 
-        /** 중요메모 체크버튼 **/
-        Image(
-            painter = painterResource(id = if (isImportance) R.drawable.ic_star_fill else R.drawable.ic_star),
-            contentDescription = "star",
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 16.dp, end = 20.dp)
-                .size(24.dp)
-                .clickable {
-                    isImportance = isImportance.not()
-                }
-        ) // 중요메모 체크버튼
-
-        LazyColumn(
-            modifier = Modifier
-                .padding(top = 56.dp, bottom = 64.dp, start = 24.dp, end = 24.dp)
-        ) {
-
-            /** 타이틀 **/
-            item {
-                Text(
-                    text = "한줄 제목이 들어가는 곳입니다.한줄 제목이 들어가는 곳입니다.한줄 제목이 들어가는 곳입니다.한줄 제목이 들어가는 곳입니다.한줄 제목이 들어가는 곳입니다.",
-                    style = Typography.titleMedium,
-                )
-            }  // 타이틀
-
-            /** 구분선 **/
-            item {
-                Spacer(modifier = Modifier.height(10.dp))
-                Box(
+        when (statusState.value) {
+            is DetailViewModel.Event.Init -> {
+                viewModel.selectMemo(index = index)
+            }
+            is DetailViewModel.Event.Failure -> {
+                routeAction.popupBackStack()
+            }
+            is DetailViewModel.Event.Success -> {
+                val memoItem =
+                    (statusState.value as? DetailViewModel.Event.Success)?.memoItem ?: return@Box
+                /** 중요메모 체크버튼 **/
+                Image(
+                    painter = painterResource(id = if (memoItem.isImportance) R.drawable.ic_star_fill else R.drawable.ic_star),
+                    contentDescription = "star",
                     modifier = Modifier
-                        .fillParentMaxWidth()
-                        .height(1.dp)
-                        .background(Black)
-                )
-            } // 구분선
+                        .align(Alignment.TopEnd)
+                        .padding(top = 16.dp, end = 20.dp)
+                        .size(24.dp)
+                        .clickable {
+                            // todo db update
+                        }
+                ) // 중요메모 체크버튼
 
-            /** 내용 **/
-            item {
-                Card(
-                    shape = RoundedCornerShape(10.dp),
-                    border = BorderStroke(2.dp, Color(0xFFF37878)),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFBEBE)
-                    ),
+                LazyColumn(
                     modifier = Modifier
-                        .fillParentMaxWidth()
-                        .padding(top = 15.dp)
-                        .defaultMinSize(minHeight = 200.dp)
+                        .padding(top = 56.dp, bottom = 64.dp, start = 24.dp, end = 24.dp)
                 ) {
-                    Text(
-                        text = "내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.\n내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.\n내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.내용이들어갑니다.",
+
+                    /** 타이틀 **/
+                    item {
+                        Text(
+                            text = memoItem.title,
+                            style = Typography.titleMedium,
+                        )
+                    }  // 타이틀
+
+                    /** 구분선 **/
+                    item {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Box(
+                            modifier = Modifier
+                                .fillParentMaxWidth()
+                                .height(1.dp)
+                                .background(Black)
+                        )
+                    } // 구분선
+
+                    /** 내용 **/
+                    item {
+                        Card(
+                            shape = RoundedCornerShape(10.dp),
+                            border = BorderStroke(2.dp, Color(getMainColor(memoItem.colorGroup))),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(getSubColor(memoItem.colorGroup))
+                            ),
+                            modifier = Modifier
+                                .fillParentMaxWidth()
+                                .padding(top = 15.dp)
+                                .defaultMinSize(minHeight = 200.dp)
+                        ) {
+                            Text(
+                                text = memoItem.contents,
+                                modifier = Modifier
+                                    .padding(vertical = 6.dp, horizontal = 12.dp)
+                                    .fillParentMaxWidth()
+                            )
+                        }
+                    } // 내용
+                } // LazyColumn
+
+                /** 수정/삭제 버튼 **/
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                        .align(Alignment.BottomCenter)
+                ) {
+                    /** 수정하기 **/
+                    Card(
+                        onClick = { },
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFFAD9A1)
+                        ),
+                        border = BorderStroke(1.dp, Black),
                         modifier = Modifier
-                            .padding(vertical = 6.dp, horizontal = 12.dp)
-                            .fillParentMaxWidth()
-                    )
-                }
-            } // 내용
-        } // LazyColumn
+                            .weight(1f)
+                    ) {
+                        Text(
+                            text = "수정하기",
+                            color = White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .padding(vertical = 6.dp)
+                                .fillMaxWidth()
+                        )
+                    }
 
-        /** 수정/삭제 버튼 **/
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(24.dp),
-            modifier = Modifier
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-                .align(Alignment.BottomCenter)
-        ) {
-            /** 수정하기 **/
-            Card(
-                onClick = {  },
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFAD9A1)
-                ),
-                border = BorderStroke(1.dp, Black),
-                modifier = Modifier
-                    .weight(1f)
-            ) {
-                Text(
-                    text = "수정하기",
-                    color = White,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(vertical = 6.dp)
-                        .fillMaxWidth()
-                )
+                    /** 삭제하기 **/
+                    Card(
+                        onClick = {
+                            viewModel.deleteMemo(index)
+                        },
+                        colors = CardDefaults.cardColors(
+                            containerColor = Color(0xFFF37878)
+                        ),
+                        border = BorderStroke(1.dp, Black),
+                        modifier = Modifier
+                            .weight(1f)
+                    ) {
+                        Text(
+                            text = "삭제하기",
+                            color = White,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier
+                                .padding(vertical = 6.dp)
+                                .fillMaxWidth()
+                        )
+                    }
+                } // Row
             }
-
-            /** 삭제하기 **/
-            Card(
-                onClick = {  },
-                colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF37878)
-                ),
-                border = BorderStroke(1.dp, Black),
-                modifier = Modifier
-                    .weight(1f)
-            ) {
-                Text(
-                    text = "삭제하기",
-                    color = White,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(vertical = 6.dp)
-                        .fillMaxWidth()
-                )
-            }
-        } // Row
+        }
     } // Box
 }

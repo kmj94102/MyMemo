@@ -1,6 +1,8 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+    id 'com.google.dagger.hilt.android'
 }
 
 android {
@@ -63,4 +65,19 @@ dependencies {
     // compose navigation
     def nav_version = "2.5.0"
     implementation "androidx.navigation:navigation-compose:$nav_version"
+
+    // Room library
+    implementation "androidx.room:room-runtime:2.4.2"
+    implementation "androidx.room:room-ktx:2.4.2"
+    kapt "androidx.room:room-compiler:2.4.2"
+
+    // Lottie Animation
+    implementation 'com.airbnb.android:lottie:5.2.0'
+    implementation "com.airbnb.android:lottie-compose:5.2.0"
+
+    // hilt
+    implementation 'com.google.dagger:hilt-android:2.43'
+    kapt 'com.google.dagger:hilt-compiler:2.43'
+    implementation 'androidx.hilt:hilt-navigation-compose:1.0.0'
+
 }

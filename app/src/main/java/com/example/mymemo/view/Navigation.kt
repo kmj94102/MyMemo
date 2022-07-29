@@ -3,9 +3,11 @@ package com.example.mymemo.view
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.mymemo.view.detail.MemoDetailContainer
 import com.example.mymemo.view.list.MemoListContainer
 import com.example.mymemo.view.write.MemoWriteContainer
@@ -24,8 +26,14 @@ fun NavGraph() {
             MemoListContainer(routeAction)
         }
         /** 메모 상세 화면 **/
-        composable(RouteAction.Detail) {
-            MemoDetailContainer(routeAction)
+        composable(
+            route = "${RouteAction.Detail}/{index}",
+            arguments = listOf(
+                navArgument("index") { type = NavType.LongType }
+            )
+        ) { entry ->
+            val index = entry.arguments?.getLong("index")
+            MemoDetailContainer(routeAction, index)
         }
         /** 메모 작성 화면 **/
         composable(RouteAction.Write) {
@@ -37,8 +45,8 @@ fun NavGraph() {
 
 class RouteAction(private val navController: NavHostController) {
 
-    fun navToDetail() {
-        navController.navigate(Detail)
+    fun navToDetail(index: Long) {
+        navController.navigate("$Detail/$index")
     }
 
     fun navToWrite() {
