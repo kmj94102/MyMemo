@@ -19,10 +19,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.mymemo.R
 import com.example.mymemo.ui.theme.*
+import com.example.mymemo.view.RouteAction
 import kotlin.random.Random
 
 @Composable
-fun MemoListContainer() {
+fun MemoListContainer(routeAction: RouteAction) {
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -45,9 +46,10 @@ fun MemoListContainer() {
             item {
                 var field by remember { mutableStateOf("") }
 
-                SearchBar(
+                InputBar(
                     modifier = Modifier.padding(vertical = 10.dp),
-                    field
+                    field = field,
+                    hint = stringResource(id = R.string.guide_input_search)
                 ) {
                     field = it
                 }
@@ -71,7 +73,9 @@ fun MemoListContainer() {
                 Spacer(modifier = Modifier.height(10.dp))
 
                 (0..10).forEach { _ ->
-                    MemoItem(modifier = Modifier.fillMaxWidth())
+                    MemoItem(modifier = Modifier.fillMaxWidth()) {
+                        routeAction.navToDetail()
+                    }
                     Spacer(modifier = Modifier.height(10.dp))
                 }
             }
@@ -84,7 +88,7 @@ fun MemoListContainer() {
                 .align(Alignment.BottomEnd)
                 .padding(bottom = 16.dp, end = 24.dp)
         ) {
-
+            routeAction.navToWrite()
         }
 
         /** 다이얼로그 **/
@@ -96,9 +100,11 @@ fun MemoListContainer() {
 /** 검색창 **/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar(
+fun InputBar(
     modifier: Modifier = Modifier,
     field: String,
+    hint: String,
+    isSingleLine : Boolean = true,
     listener: (String) -> Unit
 ) {
     Card(
@@ -115,15 +121,16 @@ fun SearchBar(
             onValueChange = {
                 listener(it)
             },
-            singleLine = true,
+            singleLine = isSingleLine,
             placeholder = {
-                Text(text = stringResource(id = R.string.guide_input_search))
+                Text(text = hint)
             },
             colors = TextFieldDefaults.textFieldColors(
                 // TextField UnderLine 제거
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
+                disabledIndicatorColor = Color.Transparent,
+                containerColor = Color.Transparent
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -157,7 +164,8 @@ fun CustomChip(
 /** 메모 아이템 **/
 @Composable
 fun MemoItem(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    clickListener: () -> Unit
 ) {
 
     // todo 임시 수정 예정
@@ -180,6 +188,7 @@ fun MemoItem(
             .height(65.dp)
             .clip(RoundedCornerShape(10.dp))
             .background(lightColorList[random])
+            .clickable { clickListener() }
     ) {
         Box(
             modifier = Modifier
