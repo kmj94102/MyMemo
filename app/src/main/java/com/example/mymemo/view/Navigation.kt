@@ -39,6 +39,16 @@ fun NavGraph() {
         composable(RouteAction.Write) {
             MemoWriteContainer(routeAction)
         }
+        /** 메모 수정 화면 **/
+        composable(
+            route = "${RouteAction.Write}/{index}",
+            arguments = listOf(
+                navArgument("index") { type = NavType.LongType }
+            )
+        ) { entry ->
+            val index = entry.arguments?.getLong("index") ?: -1
+            MemoWriteContainer(routeAction, index)
+        }
     }
 
 }
@@ -47,6 +57,10 @@ class RouteAction(private val navController: NavHostController) {
 
     fun navToDetail(index: Long) {
         navController.navigate("$Detail/$index")
+    }
+
+    fun navToModify(index: Long) {
+        navController.navigate("$Write/$index")
     }
 
     fun navToWrite() {

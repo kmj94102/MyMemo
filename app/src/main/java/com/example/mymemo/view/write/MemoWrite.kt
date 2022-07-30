@@ -37,9 +37,10 @@ fun MemoWriteContainer(
 
     val state = viewModel.memoItemState.value
     val context = LocalContext.current
+    var isModify = false
 
     if (memoIndex != -1L) {
-        viewModel.selectMemo(memoIndex)
+        isModify = true
     }
 
     Box(
@@ -171,14 +172,30 @@ fun MemoWriteContainer(
             ),
             border = BorderStroke(1.dp, Black),
             onClick = {
-                viewModel.insertMemo(
-                    successListener = {
-                        context.toast("등록 완료")
-                        routeAction.popupBackStack()
-                    },
-                    failureListener = {
-                        context.toast("등록 실패")
-                    }
+                if (isModify) {
+                    viewModel.event(
+                        WriteEvent.UpdateMemo(
+                            successListener = {
+                                context.toast("수정 완료")
+                                routeAction.popupBackStack()
+                            },
+                            failureListener = {
+                                context.toast("수정 실패")
+                            }
+                        )
+                    )
+                    return@Card
+                }
+                viewModel.event(
+                    WriteEvent.InsertMemo(
+                        successListener = {
+                            context.toast("등록 완료")
+                            routeAction.popupBackStack()
+                        },
+                        failureListener = {
+                            context.toast("등록 실패")
+                        }
+                    )
                 )
             },
             modifier = Modifier

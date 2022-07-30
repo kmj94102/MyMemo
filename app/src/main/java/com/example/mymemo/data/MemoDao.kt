@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface MemoDao {
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemoItem(memoEntity: MemoEntity): Long
 
     @Query("SELECT * FROM MemoEntity")
@@ -20,5 +20,8 @@ interface MemoDao {
 
     @Query("DELETE FROM MemoEntity WHERE `index` = :index")
     suspend fun deleteMemoIndex(index: Long)
+
+    @Query("UPDATE  MemoEntity SET `isImportance` = :isImportance WHERE `index` = :index")
+    suspend fun updateImportance(index: Long, isImportance: Boolean): Int
 
 }
