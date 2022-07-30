@@ -40,8 +40,6 @@ fun MemoDetailContainer(
     if (index == null) {
         routeAction.popupBackStack()
         return
-    } else {
-        viewModel.event(DetailEvent.SearchMemo(index))
     }
 
     val memoItem = viewModel.memoITemState.value

@@ -2,6 +2,7 @@ package com.example.mymemo.view.detail
 
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.mymemo.data.MemoItem
@@ -13,7 +14,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class DetailViewModel @Inject constructor(
-    private val repository: MemoRepository
+    private val repository: MemoRepository,
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _memoItemState = mutableStateOf(MemoItem())
@@ -21,6 +23,14 @@ class DetailViewModel @Inject constructor(
 
     private val _eventFlow = MutableSharedFlow<UiEvent>()
     val eventFlow = _eventFlow
+
+    init {
+        savedStateHandle.get<Long>("index")?.let {
+            if (it != -1L) {
+                selectMemo(it)
+            }
+        }
+    }
 
     private fun selectMemo(index: Long) {
         repository.selectMemoIndex(index)
@@ -30,6 +40,7 @@ class DetailViewModel @Inject constructor(
                     UiEvent.Error("메모 조회를 실패하였습니다.")
                 )
             }
+            .catch {  }
             .launchIn(viewModelScope)
     }
 
@@ -54,9 +65,6 @@ class DetailViewModel @Inject constructor(
 
     fun event(event: DetailEvent) {
         when(event) {
-            is DetailEvent.SearchMemo -> {
-                selectMemo(event.index)
-            }
             is DetailEvent.UpdateImportance -> {
                 updateImportance(event.index, event.isImportance)
             }
