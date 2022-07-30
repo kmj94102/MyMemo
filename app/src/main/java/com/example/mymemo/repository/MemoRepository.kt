@@ -15,8 +15,8 @@ class MemoRepository @Inject constructor(
     suspend fun insertMemoItem(memoItem: MemoItem): Long =
         db.insertMemoItem(memoItem.mapper())
 
-    fun selectAllMemo(): Flow<List<MemoItem>> =
-        db.selectAllMemo().map { it.map { entity -> entity.mapper() } }
+    fun selectAllMemo(search: String): Flow<List<MemoItem>> =
+        db.selectAllMemo(search).map { it.map { entity -> entity.mapper() } }
 
     fun selectMemoIndex(index: Long): Flow<MemoItem> =
         db.selectMemoIndex(index).map { it.mapper() }

@@ -29,7 +29,8 @@ data class MemoEntity(
         isSecret = isSecret,
         isImportance = isImportance,
         password = password,
-        colorGroup = colorGroup
+        colorGroup = colorGroup,
+        timestamp = timestamp
     )
 }
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mymemo.R
 import com.example.mymemo.data.MemoEntity
+import com.example.mymemo.data.MemoItem
 import com.example.mymemo.ui.theme.*
 import com.example.mymemo.util.getMainColor
 import com.example.mymemo.util.getSubColor
@@ -32,8 +33,7 @@ fun MemoListContainer(
     viewModel: MemoListViewModel = hiltViewModel()
 ) {
 
-    val list = viewModel.list.collectAsState()
-    viewModel.selectAllMemo()
+    val list = viewModel.list.value
 
     Box(modifier = Modifier.fillMaxSize()) {
 
@@ -54,14 +54,13 @@ fun MemoListContainer(
 
             /** 검색창 **/
             item {
-                var field by remember { mutableStateOf("") }
-
+                val field = viewModel.searchState.value
                 InputBar(
                     modifier = Modifier.padding(vertical = 10.dp),
                     field = field,
                     hint = stringResource(id = R.string.guide_input_search)
                 ) {
-                    field = it
+                    viewModel.event(ListEvent.WriteSearch(it))
                 }
             }
 
@@ -71,10 +70,19 @@ fun MemoListContainer(
                     horizontalArrangement = Arrangement.spacedBy(5.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    CustomChip("기본순", true) {}
-                    CustomChip("날짜순", false) {}
-                    CustomChip("중요글만", false) {}
-                    CustomChip("비밀글만", false) {}
+                    val queryState = viewModel.queryState.value
+                    CustomChip(str = "날짜순", isSelected = queryState == 0) {
+                        viewModel.event(ListEvent.ChangeQuery(0))
+                    }
+                    CustomChip(str = "타이틀순", isSelected = queryState == 1) {
+                        viewModel.event(ListEvent.ChangeQuery(1))
+                    }
+                    CustomChip(str = "중요글만", isSelected = queryState == 2) {
+                        viewModel.event(ListEvent.ChangeQuery(2))
+                    }
+                    CustomChip(str = "비밀글만", isSelected = queryState == 3) {
+                        viewModel.event(ListEvent.ChangeQuery(3))
+                    }
                 }
             }
 
@@ -82,8 +90,12 @@ fun MemoListContainer(
             item {
                 Spacer(modifier = Modifier.height(10.dp))
 
-                list.value.forEach { entity ->
-                    MemoItem(memoEntity = entity, modifier = Modifier.fillMaxWidth()) {
+                list.forEach { entity ->
+                    MemoItem(
+                        memoEntity = entity,
+                        viewModel = viewModel,
+                        modifier = Modifier.fillMaxWidth(),
+                    ){
                         routeAction.navToDetail(it)
                     }
                     Spacer(modifier = Modifier.height(10.dp))
@@ -176,8 +188,9 @@ fun CustomChip(
 /** 메모 아이템 **/
 @Composable
 fun MemoItem(
-    memoEntity: MemoEntity,
+    memoEntity: MemoItem,
     modifier: Modifier = Modifier,
+    viewModel: MemoListViewModel,
     clickListener: (Long) -> Unit
 ) {
 
@@ -252,6 +265,9 @@ fun MemoItem(
                     contentDescription = "trash",
                     modifier = Modifier
                         .size(24.dp)
+                        .clickable {
+                            viewModel.event(ListEvent.DeleteMemo(index = memoEntity.index))
+                        }
                 )
 
                 Image(
@@ -259,6 +275,9 @@ fun MemoItem(
                     contentDescription = "star",
                     modifier = Modifier
                         .size(24.dp)
+                        .clickable {
+                            viewModel.event(ListEvent.UpdateImportance(memoEntity.index, memoEntity.isImportance.not()))
+                        }
                 )
             }
         }

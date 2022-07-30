@@ -7,7 +7,8 @@ data class MemoItem(
     var isSecret: Boolean = false,
     var isImportance: Boolean = false,
     var password: String = "",
-    var colorGroup: Int = 0
+    var colorGroup: Int = 0,
+    val timestamp: Long = System.currentTimeMillis()
 ) {
     fun mapper() = MemoEntity(
         index = index,
@@ -16,6 +17,7 @@ data class MemoItem(
         isSecret = isSecret,
         isImportance = isImportance,
         password = password,
-        colorGroup = colorGroup
+        colorGroup = colorGroup,
+        timestamp = timestamp
     )
 }

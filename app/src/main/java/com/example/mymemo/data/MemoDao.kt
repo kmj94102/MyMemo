@@ -12,8 +12,8 @@ interface MemoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMemoItem(memoEntity: MemoEntity): Long
 
-    @Query("SELECT * FROM MemoEntity")
-    fun selectAllMemo(): Flow<List<MemoEntity>>
+    @Query("SELECT * FROM MemoEntity WHERE `title` LIKE :search")
+    fun selectAllMemo(search : String): Flow<List<MemoEntity>>
 
     @Query("SELECT * FROM MemoEntity WHERE `index` = :index")
     fun selectMemoIndex(index: Long): Flow<MemoEntity>
