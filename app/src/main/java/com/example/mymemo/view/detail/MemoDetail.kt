@@ -26,6 +26,8 @@ import com.example.mymemo.util.getMainColor
 import com.example.mymemo.util.getSubColor
 import com.example.mymemo.util.toast
 import com.example.mymemo.view.RouteAction
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,10 +40,22 @@ fun MemoDetailContainer(
     if (index == null) {
         routeAction.popupBackStack()
         return
+    } else {
+        viewModel.event(DetailEvent.SearchMemo(index))
     }
 
-    val statusState = viewModel.statusState.collectAsState()
+    val memoItem = viewModel.memoITemState.value
     val context = LocalContext.current
+    
+    LaunchedEffect(key1 = true) {
+        viewModel.eventFlow.collectLatest { event ->
+            when(event) {
+                is DetailViewModel.UiEvent.Error -> {
+                    context.toast(event.msg)
+                }
+            }
+        }
+    }
 
     Box(
         modifier = Modifier
@@ -60,126 +74,124 @@ fun MemoDetailContainer(
                 }
         ) // 뒤로가기 버튼
 
-        when (statusState.value) {
-            is DetailViewModel.Event.Init -> {
-                viewModel.selectMemo(index = index)
-            }
-            is DetailViewModel.Event.Failure -> {
-                routeAction.popupBackStack()
-            }
-            is DetailViewModel.Event.Success -> {
-                val memoItem =
-                    (statusState.value as? DetailViewModel.Event.Success)?.memoItem ?: return@Box
-                /** 중요메모 체크버튼 **/
-                Image(
-                    painter = painterResource(id = if (memoItem.isImportance) R.drawable.ic_star_fill else R.drawable.ic_star),
-                    contentDescription = "star",
-                    modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(top = 16.dp, end = 20.dp)
-                        .size(24.dp)
-                        .clickable {
-                            // todo db update
-                        }
-                ) // 중요메모 체크버튼
+        Image(
+            painter = painterResource(
+                id = if (memoItem.isImportance) R.drawable.ic_star_fill
+                else R.drawable.ic_star
+            ),
+            contentDescription = "star",
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 16.dp, end = 20.dp)
+                .size(24.dp)
+                .clickable {
+                    viewModel.event(
+                        DetailEvent.UpdateImportance(index, memoItem.isImportance.not())
+                    )
+                }
+        ) // 중요메모 체크버튼
 
-                LazyColumn(
+        LazyColumn(
+            modifier = Modifier
+                .padding(top = 56.dp, bottom = 64.dp, start = 24.dp, end = 24.dp)
+        ) {
+
+            /** 타이틀 **/
+            item {
+                Text(
+                    text = memoItem.title,
+                    style = Typography.titleMedium,
+                )
+            }  // 타이틀
+
+            /** 구분선 **/
+            item {
+                Spacer(modifier = Modifier.height(10.dp))
+                Box(
                     modifier = Modifier
-                        .padding(top = 56.dp, bottom = 64.dp, start = 24.dp, end = 24.dp)
+                        .fillParentMaxWidth()
+                        .height(1.dp)
+                        .background(Black)
+                )
+            } // 구분선
+
+            /** 내용 **/
+            item {
+                Card(
+                    shape = RoundedCornerShape(10.dp),
+                    border = BorderStroke(2.dp, Color(getMainColor(memoItem.colorGroup))),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(getSubColor(memoItem.colorGroup))
+                    ),
+                    modifier = Modifier
+                        .fillParentMaxWidth()
+                        .padding(top = 15.dp)
+                        .defaultMinSize(minHeight = 200.dp)
                 ) {
+                    Text(
+                        text = memoItem.contents,
+                        modifier = Modifier
+                            .padding(vertical = 6.dp, horizontal = 12.dp)
+                            .fillParentMaxWidth()
+                    )
+                }
+            } // 내용
+        } // LazyColumn
 
-                    /** 타이틀 **/
-                    item {
-                        Text(
-                            text = memoItem.title,
-                            style = Typography.titleMedium,
-                        )
-                    }  // 타이틀
-
-                    /** 구분선 **/
-                    item {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Box(
-                            modifier = Modifier
-                                .fillParentMaxWidth()
-                                .height(1.dp)
-                                .background(Black)
-                        )
-                    } // 구분선
-
-                    /** 내용 **/
-                    item {
-                        Card(
-                            shape = RoundedCornerShape(10.dp),
-                            border = BorderStroke(2.dp, Color(getMainColor(memoItem.colorGroup))),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color(getSubColor(memoItem.colorGroup))
-                            ),
-                            modifier = Modifier
-                                .fillParentMaxWidth()
-                                .padding(top = 15.dp)
-                                .defaultMinSize(minHeight = 200.dp)
-                        ) {
-                            Text(
-                                text = memoItem.contents,
-                                modifier = Modifier
-                                    .padding(vertical = 6.dp, horizontal = 12.dp)
-                                    .fillParentMaxWidth()
-                            )
-                        }
-                    } // 내용
-                } // LazyColumn
-
-                /** 수정/삭제 버튼 **/
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(24.dp),
+        /** 수정/삭제 버튼 **/
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(24.dp),
+            modifier = Modifier
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+                .align(Alignment.BottomCenter)
+        ) {
+            /** 수정하기 **/
+            Card(
+                onClick = {
+                    routeAction.navToModify(index)
+                },
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFFAD9A1)
+                ),
+                border = BorderStroke(1.dp, Black),
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                Text(
+                    text = "수정하기",
+                    color = White,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .padding(horizontal = 24.dp, vertical = 16.dp)
-                        .align(Alignment.BottomCenter)
-                ) {
-                    /** 수정하기 **/
-                    Card(
-                        onClick = { },
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFAD9A1)
-                        ),
-                        border = BorderStroke(1.dp, Black),
-                        modifier = Modifier
-                            .weight(1f)
-                    ) {
-                        Text(
-                            text = "수정하기",
-                            color = White,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .padding(vertical = 6.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-
-                    /** 삭제하기 **/
-                    Card(
-                        onClick = {
-                            viewModel.deleteMemo(index)
-                        },
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF37878)
-                        ),
-                        border = BorderStroke(1.dp, Black),
-                        modifier = Modifier
-                            .weight(1f)
-                    ) {
-                        Text(
-                            text = "삭제하기",
-                            color = White,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier
-                                .padding(vertical = 6.dp)
-                                .fillMaxWidth()
-                        )
-                    }
-                } // Row
+                        .padding(vertical = 6.dp)
+                        .fillMaxWidth()
+                )
             }
-        }
+
+            /** 삭제하기 **/
+            Card(
+                onClick = {
+                    viewModel.event(
+                        DetailEvent.DeleteMemo(index) {
+                            routeAction.popupBackStack()
+                        }
+                    )
+                },
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFFF37878)
+                ),
+                border = BorderStroke(1.dp, Black),
+                modifier = Modifier
+                    .weight(1f)
+            ) {
+                Text(
+                    text = "삭제하기",
+                    color = White,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .padding(vertical = 6.dp)
+                        .fillMaxWidth()
+                )
+            }
+        } // Row
     } // Box
 }

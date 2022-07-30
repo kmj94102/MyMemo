@@ -12,8 +12,8 @@ class MemoRepository @Inject constructor(
     private val db: MemoDao
 ) {
 
-    suspend fun insertMemoItem(memoEntity: MemoItem): Long =
-        db.insertMemoItem(memoEntity.mapper())
+    suspend fun insertMemoItem(memoItem: MemoItem): Long =
+        db.insertMemoItem(memoItem.mapper())
 
     fun selectAllMemo(): Flow<List<MemoItem>> =
         db.selectAllMemo().map { it.map { entity -> entity.mapper() } }
@@ -23,5 +23,11 @@ class MemoRepository @Inject constructor(
 
     suspend fun deleteMemoIndex(index: Long) =
         db.deleteMemoIndex(index)
+
+    suspend fun updateImportance(index: Long, isImportance: Boolean) =
+        db.updateImportance(index, isImportance)
+
+    suspend fun updateMemo(memoItem: MemoItem) =
+        db.insertMemoItem(memoItem.mapper())
 
 }
