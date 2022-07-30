@@ -1,68 +1,75 @@
 package com.example.mymemo.view.write
 
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mymemo.data.MemoDao
-import com.example.mymemo.data.MemoEntity
+import com.example.mymemo.data.MemoItem
+import com.example.mymemo.repository.MemoRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class MemoWriteViewModel @Inject constructor(
-    private val db: MemoDao
+    private val repository: MemoRepository
 ) : ViewModel() {
 
-    val statusState = MutableStateFlow<InsertEvent>(InsertEvent.Init)
-    val titleState = MutableStateFlow("")
-    val contentsState = MutableStateFlow("")
-    val isSecretState = MutableStateFlow(false)
-    val passwordState = MutableStateFlow("")
-    val colorGroupState = MutableStateFlow(0)
+    private val _memoItem = mutableStateOf(MemoItem())
+    val memoItemState : State<MemoItem> = _memoItem
 
-    fun insertMemo() = viewModelScope.launch {
+    fun insertMemo(
+        successListener: () -> Unit,
+        failureListener: () -> Unit
+    ) = viewModelScope.launch {
+        val result = repository.insertMemoItem(memoEntity = _memoItem.value)
 
-        if (titleState.value.isEmpty()) {
-            statusState.emit(InsertEvent.EmptyTitle)
-            return@launch
-        }
-
-        if (contentsState.value.isEmpty()) {
-            statusState.emit(InsertEvent.EmptyContents)
-            return@launch
-        }
-
-        if (isSecretState.value && passwordState.value.isEmpty()) {
-            statusState.emit(InsertEvent.EmptyPassword)
-            return@launch
-        }
-
-        val result = db.insertMemoItem(
-            MemoEntity(
-                title = titleState.value,
-                contents = contentsState.value,
-                isSecret = isSecretState.value,
-                password = passwordState.value,
-                colorGroup = colorGroupState.value
-            )
-        )
-
-        if (result == -1L) {
-            statusState.emit(InsertEvent.Failure)
-        } else {
-            statusState.emit(InsertEvent.Success)
-        }
-
+        if (result == -1L) failureListener() else successListener()
     }
 
-    sealed class InsertEvent {
-        object Init: InsertEvent()
-        object Failure: InsertEvent()
-        object Success: InsertEvent()
-        object EmptyTitle: InsertEvent()
-        object EmptyContents: InsertEvent()
-        object EmptyPassword: InsertEvent()
+    fun selectMemo(
+        index: Long
+    ) {
+        repository.selectMemoIndex(index)
+            .onEach {
+                _memoItem.value = it
+            }
+            .launchIn(viewModelScope)
+    }
+
+    fun event(event: WriteEvent) {
+        when(event) {
+            is WriteEvent.WriteTitle -> {
+                _memoItem.value = _memoItem.value.copy(
+                    title = event.title
+                )
+            }
+            is WriteEvent.WriteContents -> {
+                _memoItem.value = _memoItem.value.copy(
+                    contents = event.contents
+                )
+            }
+            is WriteEvent.WritePassword -> {
+                _memoItem.value = _memoItem.value.copy(
+                    password = event.password
+                )
+            }
+            is WriteEvent.ChangeSecretMode -> {
+                _memoItem.value = _memoItem.value.copy(
+                    isSecret = event.isSecret
+                )
+            }
+            is WriteEvent.ChangeColorGroup -> {
+                _memoItem.value = _memoItem.value.copy(
+                    colorGroup = event.colorGroup
+                )
+            }
+            is WriteEvent.InsertMemo -> {
+                insertMemo(event.successListener, event.failureListener)
+            }
+        }
     }
 
 }

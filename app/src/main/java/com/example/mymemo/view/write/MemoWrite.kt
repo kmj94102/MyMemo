@@ -1,7 +1,5 @@
 package com.example.mymemo.view.write
 
-import android.os.Handler
-import android.os.Looper
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -33,16 +31,16 @@ import com.example.mymemo.view.list.InputBar
 @Composable
 fun MemoWriteContainer(
     routeAction: RouteAction,
+    memoIndex: Long = -1,
     viewModel: MemoWriteViewModel = hiltViewModel()
 ) {
 
-    val titleState = viewModel.titleState.collectAsState()
-    val contentsState = viewModel.contentsState.collectAsState()
-    val isSecretState = viewModel.isSecretState.collectAsState()
-    val passwordState = viewModel.passwordState.collectAsState()
-    val colorGroupState = viewModel.colorGroupState.collectAsState()
-    val statusState = viewModel.statusState.collectAsState()
+    val state = viewModel.memoItemState.value
     val context = LocalContext.current
+
+    if (memoIndex != -1L) {
+        viewModel.selectMemo(memoIndex)
+    }
 
     Box(
         modifier = Modifier.fillMaxSize()
@@ -69,32 +67,32 @@ fun MemoWriteContainer(
             item {
                 InputBar(
                     modifier = Modifier.padding(vertical = 10.dp),
-                    field = titleState.value,
+                    field = state.title,
                     hint = "타이틀을 입력해주세요.",
-                    containerColor = Color(getSubColor(colorGroupState.value)),
-                    borderColor = Color(getMainColor(colorGroupState.value))
+                    containerColor = Color(getSubColor(state.colorGroup)),
+                    borderColor = Color(getMainColor(state.colorGroup))
                 ) {
-                    viewModel.titleState.value = it
+                    viewModel.event(WriteEvent.WriteTitle(it))
                 }
             } // 타이틀 입력
 
             /** 내용 입력 **/
             item {
                 InputBar(
-                    field = contentsState.value,
+                    field = state.contents,
                     hint = "내용을 입력해주세요.",
-                    containerColor = Color(getSubColor(colorGroupState.value)),
-                    borderColor = Color(getMainColor(colorGroupState.value)),
+                    containerColor = Color(getSubColor(state.colorGroup)),
+                    borderColor = Color(getMainColor(state.colorGroup)),
                     isSingleLine = false,
                     modifier = Modifier
                         .padding(vertical = 10.dp)
                         .defaultMinSize(minHeight = 200.dp)
                 ) {
-                    viewModel.contentsState.value = it
+                    viewModel.event(WriteEvent.WriteContents(it))
                 }
 
                 Text(
-                    text = "${contentsState.value.length}",
+                    text = "${state.contents.length}",
                     textAlign = TextAlign.End,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -112,16 +110,16 @@ fun MemoWriteContainer(
                         .fillMaxWidth()
                 ) {
                     SelectColor(0) {
-                        viewModel.colorGroupState.value = it
+                        viewModel.event(WriteEvent.ChangeColorGroup(it))
                     }
                     SelectColor(1) {
-                        viewModel.colorGroupState.value = it
+                        viewModel.event(WriteEvent.ChangeColorGroup(it))
                     }
                     SelectColor(2) {
-                        viewModel.colorGroupState.value = it
+                        viewModel.event(WriteEvent.ChangeColorGroup(it))
                     }
                     SelectColor(3) {
-                        viewModel.colorGroupState.value = it
+                        viewModel.event(WriteEvent.ChangeColorGroup(it))
                     }
                 }
             }
@@ -133,13 +131,13 @@ fun MemoWriteContainer(
                     modifier = Modifier
                         .padding(top = 5.dp)
                         .clickable {
-                            viewModel.isSecretState.value = !viewModel.isSecretState.value
+                            viewModel.event(WriteEvent.ChangeSecretMode(state.isSecret.not()))
                         }
                 ) {
                     Checkbox(
-                        checked = isSecretState.value,
+                        checked = state.isSecret,
                         onCheckedChange = {
-                            viewModel.isSecretState.value = it
+                            viewModel.event(WriteEvent.ChangeSecretMode(state.isSecret.not()))
                         }
                     )
 
@@ -149,13 +147,16 @@ fun MemoWriteContainer(
                     )
                 }
 
-                if (isSecretState.value) {
+                if (state.isSecret) {
                     InputBar(
-                        field = passwordState.value,
+                        field = state.password,
                         hint = "비밀번호를 입력해주세요",
+                        isSingleLine = true,
+                        containerColor = Color(getSubColor(state.colorGroup)),
+                        borderColor = Color(getMainColor(state.colorGroup)),
                         modifier = Modifier.fillParentMaxWidth()
                     ) {
-                        viewModel.passwordState.value = it
+                        viewModel.event(WriteEvent.WritePassword(it))
                     }
                 }
             }// 비밀메모 설정
@@ -169,7 +170,17 @@ fun MemoWriteContainer(
                 containerColor = Primary
             ),
             border = BorderStroke(1.dp, Black),
-            onClick = { viewModel.insertMemo() },
+            onClick = {
+                viewModel.insertMemo(
+                    successListener = {
+                        context.toast("등록 완료")
+                        routeAction.popupBackStack()
+                    },
+                    failureListener = {
+                        context.toast("등록 실패")
+                    }
+                )
+            },
             modifier = Modifier
                 .padding(horizontal = 24.dp, vertical = 16.dp)
                 .align(Alignment.BottomCenter)
@@ -186,25 +197,6 @@ fun MemoWriteContainer(
         }
     }// Box
 
-    when(statusState.value) {
-        is MemoWriteViewModel.InsertEvent.Init -> {}
-        is MemoWriteViewModel.InsertEvent.EmptyTitle -> {
-            context.toast("타이틀을 입력해주세요")
-        }
-        is MemoWriteViewModel.InsertEvent.EmptyContents -> {
-            context.toast("내용을 입력해주세요")
-        }
-        is MemoWriteViewModel.InsertEvent.EmptyPassword -> {
-            context.toast("비밀번호를 입력해주세요")
-        }
-        is MemoWriteViewModel.InsertEvent.Failure -> {
-            context.toast("저장에 실패하였습니다.")
-        }
-        is MemoWriteViewModel.InsertEvent.Success -> {
-            context.toast("저장 성공.")
-            Handler(Looper.getMainLooper()).postDelayed({ routeAction.popupBackStack() }, 1000)
-        }
-    }
 
 }
 
