@@ -9,7 +9,7 @@ sealed class WriteEvent {
     data class ChangeColorGroup(val colorGroup: Int): WriteEvent()
     data class InsertMemo(
         val successListener: () -> Unit,
-        val failureListener: () -> Unit
+        val failureListener: (String) -> Unit
     ): WriteEvent()
     data class UpdateMemo(
         val successListener: () -> Unit,

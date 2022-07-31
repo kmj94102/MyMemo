@@ -1,6 +1,5 @@
 package com.example.mymemo.view.write
 
-import android.util.Log
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.SavedStateHandle
@@ -31,11 +30,27 @@ class MemoWriteViewModel @Inject constructor(
 
     private fun insertMemo(
         successListener: () -> Unit,
-        failureListener: () -> Unit
+        failureListener: (String) -> Unit
     ) = viewModelScope.launch {
-        val result = repository.insertMemoItem(_memoItem.value)
+        val item = _memoItem.value
+        if (item.title.isEmpty()) {
+            failureListener("제목을 입력해주세요.")
+            return@launch
+        }
 
-        if (result == -1L) failureListener() else successListener()
+        if (item.contents.isEmpty()) {
+            failureListener("내용을 입력해주세요.")
+            return@launch
+        }
+
+        if (item.isSecret && item.password.isEmpty()) {
+            failureListener("비밀번호를 입력해주세요.")
+            return@launch
+        }
+
+        val result = repository.insertMemoItem(item)
+
+        if (result == -1L) failureListener("등록 실패") else successListener()
     }
 
     private fun selectMemo(
@@ -59,7 +74,6 @@ class MemoWriteViewModel @Inject constructor(
     fun event(event: WriteEvent) {
         when(event) {
             is WriteEvent.SelectMemo -> {
-                Log.e("++++++", "호출")
                 selectMemo(event.index)
             }
             is WriteEvent.WriteTitle -> {

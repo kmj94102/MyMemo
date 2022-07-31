@@ -256,7 +256,7 @@ fun SelectColor(
     }
 }
 
-/** 메모 작성 완 **/
+/** 메모 작성 완료 **/
 fun writeComplete(
     isModify: Boolean,
     context: Context,
@@ -283,7 +283,7 @@ fun writeComplete(
                     routeAction.popupBackStack()
                 },
                 failureListener = {
-                    context.toast(R.string.write_failure)
+                    context.toast(it)
                 }
             )
         )
