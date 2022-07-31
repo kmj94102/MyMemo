@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,6 +74,7 @@ fun MemoDetailContainer(
                 }
         ) // 뒤로가기 버튼
 
+        /** 중요메모 체크버튼 **/
         Image(
             painter = painterResource(
                 id = if (memoItem.isImportance) R.drawable.ic_star_fill
@@ -82,7 +85,12 @@ fun MemoDetailContainer(
                 .align(Alignment.TopEnd)
                 .padding(top = 16.dp, end = 20.dp)
                 .size(24.dp)
-                .clickable {
+                .clickable(
+                    indication = null,
+                    interactionSource = remember {
+                        MutableInteractionSource()
+                    }
+                ) {
                     viewModel.event(
                         DetailEvent.UpdateImportance(index, memoItem.isImportance.not())
                     )
@@ -156,7 +164,7 @@ fun MemoDetailContainer(
                     .weight(1f)
             ) {
                 Text(
-                    text = "수정하기",
+                    text = stringResource(id = R.string.modify),
                     color = White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
@@ -182,7 +190,7 @@ fun MemoDetailContainer(
                     .weight(1f)
             ) {
                 Text(
-                    text = "삭제하기",
+                    text = stringResource(id = R.string.delete),
                     color = White,
                     textAlign = TextAlign.Center,
                     modifier = Modifier

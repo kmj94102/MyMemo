@@ -1,16 +1,26 @@
 <resources>
     <string name="app_name">MyMemo</string>
     <string name="memo">Memo</string>
-    <string name="guide_input_search">검색어를 입력해 주세요</string>
+    <string name="guide_input_search">검색어를 입력해 주세요.</string>
     <string name="order_by_date">날짜순</string>
-    <string name="order_by_title">타이틀순</string>
+    <string name="order_by_title">제목순</string>
     <string name="only_importance">중요글만</string>
     <string name="only_secret">비밀글만</string>
     <string name="empty_memo">메모를 찾지 못했어요.</string>
     <string name="secret_memo">비밀 메모입니다.</string>
+    <string name="secret_memo_setting">비밀메모 설정</string>
     <string name="confirm_password">비밀번호를 확인해주세요.</string>
-    <string name="input_password">비밀번호를 입력해주세요</string>
+    <string name="input_password">비밀번호를 입력해주세요.</string>
+    <string name="input_title">제목을 입력해주세요.</string>
+    <string name="input_contents">내용을 입력해주세요.</string>
     <string name="ok">확인</string>
     <string name="cancel">취소</string>
-    <string name="delete_memo">이 메모를 삭제하시겠습니까?</string>
+    <string name="modify">수정하기</string>
+    <string name="delete">삭제하기</string>
+    <string name="delete_memo">이 메모를 삭제하시겠습니까?</string>료
+    <string name="write_success">등록 완료</string>
+    <string name="write_failure">등록 실패</string>
+    <string name="modify_success">수정 완료</string>
+    <string name="modify_failure">수정 실패</string>
+    <string name="write_complete">작성 완료</string>리
 </resources>

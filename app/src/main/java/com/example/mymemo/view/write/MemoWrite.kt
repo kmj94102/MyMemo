@@ -1,6 +1,8 @@
 package com.example.mymemo.view.write
 
+import android.content.Context
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
@@ -9,10 +11,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -21,6 +26,7 @@ import com.example.mymemo.ui.theme.Black
 import com.example.mymemo.ui.theme.Primary
 import com.example.mymemo.ui.theme.Typography
 import com.example.mymemo.ui.theme.White
+import com.example.mymemo.util.ColorGroup
 import com.example.mymemo.util.getMainColor
 import com.example.mymemo.util.getSubColor
 import com.example.mymemo.util.toast
@@ -36,6 +42,7 @@ fun MemoWriteContainer(
 ) {
 
     val state = viewModel.memoItemState.value
+    val focusManager = LocalFocusManager.current
     val context = LocalContext.current
     var isModify = false
 
@@ -44,7 +51,8 @@ fun MemoWriteContainer(
     }
 
     Box(
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
     ) {
 
         /** 뒤로가기 **/
@@ -69,9 +77,11 @@ fun MemoWriteContainer(
                 InputBar(
                     modifier = Modifier.padding(vertical = 10.dp),
                     field = state.title,
-                    hint = "타이틀을 입력해주세요.",
+                    hint = stringResource(id = R.string.input_title),
                     containerColor = Color(getSubColor(state.colorGroup)),
-                    borderColor = Color(getMainColor(state.colorGroup))
+                    borderColor = Color(getMainColor(state.colorGroup)),
+                    moreInputBar = true,
+                    isSingleLine = true
                 ) {
                     viewModel.event(WriteEvent.WriteTitle(it))
                 }
@@ -81,7 +91,7 @@ fun MemoWriteContainer(
             item {
                 InputBar(
                     field = state.contents,
-                    hint = "내용을 입력해주세요.",
+                    hint = stringResource(id = R.string.input_contents),
                     containerColor = Color(getSubColor(state.colorGroup)),
                     borderColor = Color(getMainColor(state.colorGroup)),
                     isSingleLine = false,
@@ -110,20 +120,14 @@ fun MemoWriteContainer(
                     modifier = Modifier
                         .fillMaxWidth()
                 ) {
-                    SelectColor(0) {
-                        viewModel.event(WriteEvent.ChangeColorGroup(it))
-                    }
-                    SelectColor(1) {
-                        viewModel.event(WriteEvent.ChangeColorGroup(it))
-                    }
-                    SelectColor(2) {
-                        viewModel.event(WriteEvent.ChangeColorGroup(it))
-                    }
-                    SelectColor(3) {
-                        viewModel.event(WriteEvent.ChangeColorGroup(it))
+                    ColorGroup.values().forEachIndexed { index, colorGroup ->
+                        SelectColor(index, colorGroup) {
+                            focusManager.clearFocus()
+                            viewModel.event(WriteEvent.ChangeColorGroup(it))
+                        }
                     }
                 }
-            }
+            } // 색상 선택
 
             /** 비밀메모 설정 **/
             item {
@@ -131,19 +135,30 @@ fun MemoWriteContainer(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(top = 5.dp)
-                        .clickable {
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember {
+                                focusManager.clearFocus()
+                                MutableInteractionSource()
+                            }
+                        ) {
                             viewModel.event(WriteEvent.ChangeSecretMode(state.isSecret.not()))
                         }
                 ) {
                     Checkbox(
                         checked = state.isSecret,
                         onCheckedChange = {
+                            focusManager.clearFocus()
                             viewModel.event(WriteEvent.ChangeSecretMode(state.isSecret.not()))
-                        }
+                        },
+                        colors = CheckboxDefaults.colors(
+                            uncheckedColor = Color(0x80000000),
+                            checkedColor = Primary
+                        )
                     )
 
                     Text(
-                        text = "비밀메모 설정",
+                        text = stringResource(id = R.string.secret_memo_setting),
                         style = Typography.bodySmall
                     )
                 }
@@ -151,8 +166,9 @@ fun MemoWriteContainer(
                 if (state.isSecret) {
                     InputBar(
                         field = state.password,
-                        hint = "비밀번호를 입력해주세요",
+                        hint = stringResource(id = R.string.input_password),
                         isSingleLine = true,
+                        isPassword = true,
                         containerColor = Color(getSubColor(state.colorGroup)),
                         borderColor = Color(getMainColor(state.colorGroup)),
                         modifier = Modifier.fillParentMaxWidth()
@@ -172,38 +188,14 @@ fun MemoWriteContainer(
             ),
             border = BorderStroke(1.dp, Black),
             onClick = {
-                if (isModify) {
-                    viewModel.event(
-                        WriteEvent.UpdateMemo(
-                            successListener = {
-                                context.toast("수정 완료")
-                                routeAction.popupBackStack()
-                            },
-                            failureListener = {
-                                context.toast("수정 실패")
-                            }
-                        )
-                    )
-                    return@Card
-                }
-                viewModel.event(
-                    WriteEvent.InsertMemo(
-                        successListener = {
-                            context.toast("등록 완료")
-                            routeAction.popupBackStack()
-                        },
-                        failureListener = {
-                            context.toast("등록 실패")
-                        }
-                    )
-                )
+                writeComplete(isModify, context, viewModel, routeAction)
             },
             modifier = Modifier
                 .padding(horizontal = 24.dp, vertical = 16.dp)
                 .align(Alignment.BottomCenter)
         ) {
             Text(
-                text = "작성완료",
+                text = stringResource(id = R.string.write_complete),
                 textAlign = TextAlign.Center,
                 style = Typography.bodyLarge,
                 color = White,
@@ -211,24 +203,32 @@ fun MemoWriteContainer(
                     .fillMaxWidth()
                     .padding(vertical = 6.dp)
             )
-        }
+        } // 작성완료 버튼
     }// Box
-
-
 }
 
+/** 메모 색상 선택 **/
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectColor(index: Int, clickListener: (Int) -> Unit) {
+fun SelectColor(
+    index: Int,
+    colorGroup: ColorGroup,
+    clickListener: (Int) -> Unit
+) {
     Card(
         shape = CircleShape,
         border = BorderStroke(2.dp, Black),
         colors = CardDefaults.cardColors(
-            containerColor = Color(getMainColor(index = index))
+            containerColor = Color(colorGroup.mainColor)
         ),
         modifier = Modifier
             .size(60.dp)
-            .clickable {
+            .clickable(
+                indication = null,
+                interactionSource = remember {
+                    MutableInteractionSource()
+                }
+            ) {
                 clickListener(index)
             }
     ) {
@@ -240,7 +240,7 @@ fun SelectColor(index: Int, clickListener: (Int) -> Unit) {
         ) {
             Canvas(modifier = Modifier.size(58.dp)) {
                 drawArc(
-                    color = Color(getSubColor(index = index)),
+                    color = Color(colorGroup.subColor),
                     startAngle = 270f,
                     sweepAngle = 180f,
                     useCenter = true,
@@ -248,5 +248,39 @@ fun SelectColor(index: Int, clickListener: (Int) -> Unit) {
                 )
             }
         }
+    }
+}
+
+/** 메모 작성 완 **/
+fun writeComplete(
+    isModify: Boolean,
+    context: Context,
+    viewModel: MemoWriteViewModel,
+    routeAction: RouteAction
+) {
+    if (isModify) {
+        viewModel.event(
+            WriteEvent.UpdateMemo(
+                successListener = {
+                    context.toast(R.string.modify_success)
+                    routeAction.popupBackStack()
+                },
+                failureListener = {
+                    context.toast(R.string.modify_failure)
+                }
+            )
+        )
+    } else {
+        viewModel.event(
+            WriteEvent.InsertMemo(
+                successListener = {
+                    context.toast(R.string.write_success)
+                    routeAction.popupBackStack()
+                },
+                failureListener = {
+                    context.toast(R.string.write_failure)
+                }
+            )
+        )
     }
 }

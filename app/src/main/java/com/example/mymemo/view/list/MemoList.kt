@@ -246,7 +246,7 @@ fun InputBar(
         },
         keyboardOptions = KeyboardOptions(
             keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text,
-            imeAction = if (moreInputBar) ImeAction.Next else ImeAction.Done
+            imeAction = if (moreInputBar) ImeAction.Next else ImeAction.Default
         ),
         placeholder = {
             Text(
