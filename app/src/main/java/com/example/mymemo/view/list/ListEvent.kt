@@ -14,4 +14,10 @@ sealed class ListEvent {
         val index: Long,
         val isImportance: Boolean
     ): ListEvent()
+    data class PasswordCheck(
+        val inputPassword: String,
+        val index: Int,
+        val successListener: (Long) -> Unit,
+        val failureListener: () -> Unit
+    ): ListEvent()
 }

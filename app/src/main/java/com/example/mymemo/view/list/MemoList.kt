@@ -4,28 +4,41 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.airbnb.lottie.compose.*
 import com.example.mymemo.R
-import com.example.mymemo.data.MemoEntity
 import com.example.mymemo.data.MemoItem
 import com.example.mymemo.ui.theme.*
+import com.example.mymemo.util.dateFromTimestamp
 import com.example.mymemo.util.getMainColor
 import com.example.mymemo.util.getSubColor
+import com.example.mymemo.util.toast
 import com.example.mymemo.view.RouteAction
-import kotlin.random.Random
+import com.example.mymemo.view.dialog.DeleteDialog
+import com.example.mymemo.view.dialog.PasswordDialog
 
 @Composable
 fun MemoListContainer(
@@ -34,8 +47,28 @@ fun MemoListContainer(
 ) {
 
     val list = viewModel.list.value
+    val secretDialogState = remember { mutableStateOf(false) }
+    var secretIndex by remember { mutableStateOf(-1) }
+    val context = LocalContext.current
+    val focusManager = LocalFocusManager.current
 
-    Box(modifier = Modifier.fillMaxSize()) {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.empty_memo))
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        isPlaying = true,
+        iterations = LottieConstants.IterateForever,
+        speed = 0.5f
+    )
+
+    Box(modifier = Modifier
+        .fillMaxSize()
+        .clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+        ) {
+            focusManager.clearFocus()
+        }
+    ) {
 
         LazyColumn(
             modifier = Modifier
@@ -71,37 +104,83 @@ fun MemoListContainer(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val queryState = viewModel.queryState.value
-                    CustomChip(str = "날짜순", isSelected = queryState == 0) {
+                    CustomChip(
+                        str = stringResource(id = R.string.order_by_date),
+                        isSelected = queryState == 0
+                    ) {
+                        focusManager.clearFocus()
                         viewModel.event(ListEvent.ChangeQuery(0))
                     }
-                    CustomChip(str = "타이틀순", isSelected = queryState == 1) {
+                    CustomChip(
+                        str = stringResource(id = R.string.order_by_title),
+                        isSelected = queryState == 1
+                    ) {
+                        focusManager.clearFocus()
                         viewModel.event(ListEvent.ChangeQuery(1))
                     }
-                    CustomChip(str = "중요글만", isSelected = queryState == 2) {
+                    CustomChip(
+                        str = stringResource(id = R.string.only_importance),
+                        isSelected = queryState == 2
+                    ) {
+                        focusManager.clearFocus()
                         viewModel.event(ListEvent.ChangeQuery(2))
                     }
-                    CustomChip(str = "비밀글만", isSelected = queryState == 3) {
+                    CustomChip(
+                        str = stringResource(id = R.string.only_secret),
+                        isSelected = queryState == 3
+                    ) {
+                        focusManager.clearFocus() 
                         viewModel.event(ListEvent.ChangeQuery(3))
                     }
                 }
-            }
+            } // 검색 조건
 
-            /** 리스트 **/
-            item {
-                Spacer(modifier = Modifier.height(10.dp))
-
-                list.forEach { entity ->
-                    MemoItem(
-                        memoEntity = entity,
-                        viewModel = viewModel,
-                        modifier = Modifier.fillMaxWidth(),
-                    ){
-                        routeAction.navToDetail(it)
-                    }
+            /** 메모 리스트 **/
+            if (list.isEmpty()) {
+                /** 빈 리스트 **/
+                item {
+                    LottieAnimation(
+                        composition = composition,
+                        progress = { progress },
+                        modifier = Modifier.padding(horizontal = 25.dp)
+                    )
+                    Text(
+                        text = stringResource(id = R.string.empty_memo),
+                        style = Typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                } // 빈 리스트
+            } else {
+                /** 리스트 **/
+                item {
                     Spacer(modifier = Modifier.height(10.dp))
-                }
-            }
 
+                    list.forEachIndexed { index, item ->
+                        if (item.isSecret) {
+                            /** 비밀메모 **/
+                            SecretMemoItem(
+                                secretClickListener = {
+                                    secretDialogState.value = true
+                                    secretIndex = index
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        } else {
+                            /** 일반 메모 **/
+                            MemoItem(
+                                memoItem = item,
+                                viewModel = viewModel,
+                                clickListener = {
+                                    routeAction.navToDetail(it)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                    }
+                } // 리스트
+            } // 메모 리스트
         }// LazyColumn
 
         /** 메모 작성 버튼 **/
@@ -113,52 +192,73 @@ fun MemoListContainer(
             routeAction.navToWrite()
         }
 
-        /** 다이얼로그 **/
-
+        /** 비밀번호 다이얼로그 **/
+        PasswordDialog(
+            isShow = secretDialogState,
+            index = secretIndex
+        ) { password, index ->
+            viewModel.event(
+                ListEvent.PasswordCheck(
+                    inputPassword = password,
+                    index = index,
+                    successListener = {
+                        routeAction.navToDetail(it)
+                        secretDialogState.value = false
+                    },
+                    failureListener = {
+                        context.toast(R.string.confirm_password)
+                    }
+                )
+            )
+        } // 비밀번호 다이얼로그
     }// Box
-
 }
 
-/** 검색창 **/
-@OptIn(ExperimentalMaterial3Api::class)
+/** 입력창 **/
 @Composable
 fun InputBar(
     modifier: Modifier = Modifier,
     field: String,
     hint: String,
     borderColor: Color = Black,
-    containerColor: Color = Gray,
+    containerColor: Color = White,
     isSingleLine: Boolean = true,
+    isPassword: Boolean = false,
+    moreInputBar: Boolean = false,
     listener: (String) -> Unit
 ) {
-    Card(
-        shape = RoundedCornerShape(10.dp),
-        border = BorderStroke(1.dp, borderColor),
-        colors = CardDefaults.cardColors(
+    OutlinedTextField(
+        value = field,
+        onValueChange = {
+            listener(it)
+        },
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            cursorColor = if (borderColor == Black) Primary else borderColor,
+            unfocusedBorderColor = borderColor,
+            focusedBorderColor = if (borderColor == Black) Primary else borderColor,
             containerColor = containerColor
         ),
+        singleLine = isSingleLine,
+        visualTransformation = if (isPassword) {
+            PasswordVisualTransformation()
+        } else {
+            VisualTransformation.None
+        },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Text,
+            imeAction = if (moreInputBar) ImeAction.Next else ImeAction.Done
+        ),
+        placeholder = {
+            Text(
+                text = hint,
+                color = Color(0x80000000),
+                style = Typography.bodyMedium
+            )
+        },
+        shape = RoundedCornerShape(10.dp),
         modifier = modifier
             .fillMaxWidth()
-    ) {
-        TextField(
-            value = field,
-            onValueChange = {
-                listener(it)
-            },
-            singleLine = isSingleLine,
-            placeholder = {
-                Text(text = hint, color = Color(0x80000000))
-            },
-            colors = TextFieldDefaults.textFieldColors(
-                // TextField UnderLine 제거
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent,
-                containerColor = Color.Transparent
-            ),
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
+    )
 }
 
 /** 검색 조건에 사용할 칩 **/
@@ -188,49 +288,25 @@ fun CustomChip(
 /** 메모 아이템 **/
 @Composable
 fun MemoItem(
-    memoEntity: MemoItem,
+    memoItem: MemoItem,
     modifier: Modifier = Modifier,
     viewModel: MemoListViewModel,
-    clickListener: (Long) -> Unit
+    clickListener: (Long) -> Unit,
 ) {
-
-    if (memoEntity.isSecret) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = modifier
-                .height(65.dp)
-                .clip(RoundedCornerShape(10.dp))
-                .background(Gray)
-                .clickable {
-                    // todo 다이얼로그
-                }
-        ) {
-            Image(
-                painter = painterResource(id = R.drawable.ic_lock),
-                contentDescription = "lock",
-                modifier = Modifier.size(24.dp)
-            )
-            Text(
-                text = "비밀메모 입니다.",
-                style = Typography.bodyLarge
-            )
-        }
-        return
-    }
+    val deleteDialogState = remember { mutableStateOf(false) }
 
     Box(
         modifier = modifier
             .height(65.dp)
             .clip(RoundedCornerShape(10.dp))
-            .background(Color(getSubColor(memoEntity.colorGroup)))
-            .clickable { clickListener(memoEntity.index) }
+            .background(Color(getSubColor(memoItem.colorGroup)))
+            .clickable { clickListener(memoItem.index) }
     ) {
         Box(
             modifier = Modifier
                 .width(20.dp)
                 .fillMaxHeight()
-                .background(Color(getMainColor(memoEntity.colorGroup)))
+                .background(Color(getMainColor(memoItem.colorGroup)))
         )
 
         Column(
@@ -240,7 +316,7 @@ fun MemoItem(
                 .padding(start = 30.dp, top = 10.dp, end = 10.dp, bottom = 10.dp)
         ) {
             Text(
-                text = memoEntity.title,
+                text = memoItem.title,
                 maxLines = 1,
                 style = Typography.bodyLarge,
             )
@@ -251,7 +327,7 @@ fun MemoItem(
                     .fillMaxWidth()
             ) {
                 Text(
-                    text = "2022/07/27",
+                    text = dateFromTimestamp(memoItem.timestamp),
                     maxLines = 1,
                     style = Typography.labelSmall,
                     color = Color(0x80000000),
@@ -265,22 +341,70 @@ fun MemoItem(
                     contentDescription = "trash",
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable {
-                            viewModel.event(ListEvent.DeleteMemo(index = memoEntity.index))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            deleteDialogState.value = true
                         }
                 )
 
                 Image(
-                    painter = painterResource(id = if (memoEntity.isImportance) R.drawable.ic_star_fill else R.drawable.ic_star),
+                    painter = painterResource(
+                        id = if (memoItem.isImportance) R.drawable.ic_star_fill
+                        else R.drawable.ic_star
+                    ),
                     contentDescription = "star",
                     modifier = Modifier
                         .size(24.dp)
-                        .clickable {
-                            viewModel.event(ListEvent.UpdateImportance(memoEntity.index, memoEntity.isImportance.not()))
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            viewModel.event(
+                                ListEvent.UpdateImportance(
+                                    memoItem.index,
+                                    memoItem.isImportance.not()
+                                )
+                            )
                         }
                 )
+
+                /** 삭제 다이얼로그 **/
+                DeleteDialog(isShow = deleteDialogState) {
+                    viewModel.event(ListEvent.DeleteMemo(index = memoItem.index))
+                }
             }
         }
+    }
+}
+
+/** 비밀 메모 아이템 **/
+@Composable
+fun SecretMemoItem(
+    modifier: Modifier = Modifier,
+    secretClickListener: () -> Unit
+) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+        modifier = modifier
+            .height(65.dp)
+            .clip(RoundedCornerShape(10.dp))
+            .background(Gray)
+            .clickable {
+                secretClickListener()
+            }
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_lock),
+            contentDescription = "lock",
+            modifier = Modifier.size(24.dp)
+        )
+        Text(
+            text = stringResource(id = R.string.secret_memo),
+            style = Typography.bodyLarge
+        )
     }
 }
 
@@ -301,7 +425,12 @@ fun MemoWriteButton(
         ),
         modifier = modifier
             .size(45.dp)
-            .clickable { clickListener() }
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                clickListener()
+            }
     ) {
         Image(
             painter = painterResource(id = R.drawable.ic_write),

@@ -98,6 +98,18 @@ class MemoListViewModel @Inject constructor(
             is ListEvent.UpdateImportance -> {
                 updateImportance(event.index, event.isImportance)
             }
+            is ListEvent.PasswordCheck -> {
+                if (event.index <= -1) {
+                    event.failureListener()
+                }
+
+                val item = list.value[event.index]
+                if (item.password == event.inputPassword) {
+                    event.successListener(item.index)
+                }else {
+                    event.failureListener()
+                }
+            }
         }
     }
 
