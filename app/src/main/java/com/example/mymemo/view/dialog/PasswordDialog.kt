@@ -3,12 +3,10 @@ package com.example.mymemo.view.dialog
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -17,15 +15,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.mymemo.R
-import com.example.mymemo.ui.theme.Black
-import com.example.mymemo.ui.theme.Typography
-import com.example.mymemo.ui.theme.White
+import com.example.mymemo.ui.theme.*
 import com.example.mymemo.view.list.InputBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -43,21 +40,29 @@ fun PasswordDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .clip(RoundedCornerShape(10.dp))
-                    .background(White)
+                    .background(
+                        if (isSystemInDarkTheme()) {
+                            darkDialogBackground
+                        } else {
+                            White
+                        }
+                    )
                     .fillMaxWidth()
             ) {
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Image(
                     painter = painterResource(id = R.drawable.ic_lock),
-                    contentDescription = "lock"
+                    contentDescription = "lock",
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary)
                 )
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "비밀메모 입니다.",
-                    style = Typography.bodyLarge
+                    text = stringResource(id = R.string.secret_memo),
+                    style = Typography.bodyLarge,
+                    color = if (isSystemInDarkTheme()) White else Black
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -85,7 +90,7 @@ fun PasswordDialog(
                             isShow.value = false
                         },
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFAD9A1)
+                            containerColor = Basic
                         ),
                         border = BorderStroke(1.dp, Black),
                         modifier = Modifier
@@ -107,7 +112,7 @@ fun PasswordDialog(
                             okClickListener(field.value, index)
                         },
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF37878)
+                            containerColor = Primary
                         ),
                         border = BorderStroke(1.dp, Black),
                         modifier = Modifier
