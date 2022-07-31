@@ -23,9 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.example.mymemo.R
-import com.example.mymemo.ui.theme.Black
-import com.example.mymemo.ui.theme.Typography
-import com.example.mymemo.ui.theme.White
+import com.example.mymemo.ui.theme.*
 import com.example.mymemo.view.list.InputBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,7 +83,7 @@ fun PasswordDialog(
                             isShow.value = false
                         },
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFAD9A1)
+                            containerColor = Basic
                         ),
                         border = BorderStroke(1.dp, Black),
                         modifier = Modifier
@@ -107,7 +105,7 @@ fun PasswordDialog(
                             okClickListener(field.value, index)
                         },
                         colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFF37878)
+                            containerColor = Primary
                         ),
                         border = BorderStroke(1.dp, Black),
                         modifier = Modifier

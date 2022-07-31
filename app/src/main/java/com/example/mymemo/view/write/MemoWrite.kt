@@ -13,6 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -22,10 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mymemo.R
-import com.example.mymemo.ui.theme.Black
-import com.example.mymemo.ui.theme.Primary
-import com.example.mymemo.ui.theme.Typography
-import com.example.mymemo.ui.theme.White
+import com.example.mymemo.ui.theme.*
 import com.example.mymemo.util.ColorGroup
 import com.example.mymemo.util.getMainColor
 import com.example.mymemo.util.getSubColor
@@ -59,6 +57,7 @@ fun MemoWriteContainer(
         Image(
             painter = painterResource(id = R.drawable.ic_prev),
             contentDescription = "prev",
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary),
             modifier = Modifier
                 .padding(top = 16.dp, start = 17.dp)
                 .size(24.dp)
@@ -105,6 +104,7 @@ fun MemoWriteContainer(
                 Text(
                     text = "${state.contents.length}",
                     textAlign = TextAlign.End,
+                    color = if (isSystemInDarkTheme()) White80 else Black80,
                     modifier = Modifier
                         .fillMaxWidth()
                 )
@@ -152,14 +152,16 @@ fun MemoWriteContainer(
                             viewModel.event(WriteEvent.ChangeSecretMode(state.isSecret.not()))
                         },
                         colors = CheckboxDefaults.colors(
-                            uncheckedColor = Color(0x80000000),
-                            checkedColor = Primary
+                            uncheckedColor = MaterialTheme.colorScheme.secondary,
+                            checkedColor = Primary,
+                            checkmarkColor = White
                         )
                     )
 
                     Text(
                         text = stringResource(id = R.string.secret_memo_setting),
-                        style = Typography.bodySmall
+                        style = Typography.bodySmall,
+                        color = MaterialTheme.colorScheme.secondary
                     )
                 }
 
@@ -186,7 +188,7 @@ fun MemoWriteContainer(
             colors = CardDefaults.cardColors(
                 containerColor = Primary
             ),
-            border = BorderStroke(1.dp, Black),
+            border = BorderStroke(1.dp, if (isSystemInDarkTheme()) White else Black),
             onClick = {
                 writeComplete(isModify, context, viewModel, routeAction)
             },
@@ -217,7 +219,7 @@ fun SelectColor(
 ) {
     Card(
         shape = CircleShape,
-        border = BorderStroke(2.dp, Black),
+        border = BorderStroke(2.dp, if(isSystemInDarkTheme()) White else Black),
         colors = CardDefaults.cardColors(
             containerColor = Color(colorGroup.mainColor)
         ),

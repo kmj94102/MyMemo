@@ -1,9 +1,6 @@
 package com.example.mymemo.view.list
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -81,6 +78,7 @@ fun MemoListContainer(
                 Text(
                     text = stringResource(id = R.string.memo),
                     style = Typography.titleLarge,
+                    color = MaterialTheme.colorScheme.secondary,
                     modifier = Modifier.padding(top = 28.dp)
                 )
             }
@@ -91,7 +89,8 @@ fun MemoListContainer(
                 InputBar(
                     modifier = Modifier.padding(vertical = 10.dp),
                     field = field,
-                    hint = stringResource(id = R.string.guide_input_search)
+                    hint = stringResource(id = R.string.guide_input_search),
+                    hintColor = if (isSystemInDarkTheme()) White80 else Black80
                 ) {
                     viewModel.event(ListEvent.WriteSearch(it))
                 }
@@ -220,8 +219,9 @@ fun InputBar(
     modifier: Modifier = Modifier,
     field: String,
     hint: String,
-    borderColor: Color = Black,
-    containerColor: Color = White,
+    hintColor: Color = Black80,
+    borderColor: Color = MaterialTheme.colorScheme.secondary,
+    containerColor: Color = MaterialTheme.colorScheme.tertiary,
     isSingleLine: Boolean = true,
     isPassword: Boolean = false,
     moreInputBar: Boolean = false,
@@ -233,9 +233,17 @@ fun InputBar(
             listener(it)
         },
         colors = TextFieldDefaults.outlinedTextFieldColors(
-            cursorColor = if (borderColor == Black) Primary else borderColor,
+            cursorColor = if (borderColor == MaterialTheme.colorScheme.secondary) {
+                Primary
+            } else {
+                borderColor
+            },
             unfocusedBorderColor = borderColor,
-            focusedBorderColor = if (borderColor == Black) Primary else borderColor,
+            focusedBorderColor = if (borderColor == MaterialTheme.colorScheme.secondary) {
+                Primary
+            } else {
+                borderColor
+            },
             containerColor = containerColor
         ),
         singleLine = isSingleLine,
@@ -251,7 +259,7 @@ fun InputBar(
         placeholder = {
             Text(
                 text = hint,
-                color = Color(0x80000000),
+                color = hintColor,
                 style = Typography.bodyMedium
             )
         },
@@ -319,6 +327,7 @@ fun MemoItem(
                 text = memoItem.title,
                 maxLines = 1,
                 style = Typography.bodyLarge,
+                color = Black
             )
 
             Row(
@@ -326,11 +335,12 @@ fun MemoItem(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
+                /** 작성시간 **/
                 Text(
                     text = dateFromTimestamp(memoItem.timestamp),
                     maxLines = 1,
                     style = Typography.labelSmall,
-                    color = Color(0x80000000),
+                    color = Black80,
                     modifier = Modifier
                 )
 
@@ -403,7 +413,8 @@ fun SecretMemoItem(
         )
         Text(
             text = stringResource(id = R.string.secret_memo),
-            style = Typography.bodyLarge
+            style = Typography.bodyLarge,
+            color = Black
         )
     }
 }

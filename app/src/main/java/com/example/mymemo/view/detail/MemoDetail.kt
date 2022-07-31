@@ -1,9 +1,6 @@
 package com.example.mymemo.view.detail
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -13,6 +10,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -21,9 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.mymemo.R
-import com.example.mymemo.ui.theme.Black
-import com.example.mymemo.ui.theme.Typography
-import com.example.mymemo.ui.theme.White
+import com.example.mymemo.ui.theme.*
 import com.example.mymemo.util.getMainColor
 import com.example.mymemo.util.getSubColor
 import com.example.mymemo.util.toast
@@ -66,6 +62,7 @@ fun MemoDetailContainer(
         Image(
             painter = painterResource(id = R.drawable.ic_prev),
             contentDescription = "prev",
+            colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.secondary),
             modifier = Modifier
                 .padding(top = 16.dp, start = 17.dp)
                 .size(24.dp)
@@ -107,6 +104,7 @@ fun MemoDetailContainer(
                 Text(
                     text = memoItem.title,
                     style = Typography.titleMedium,
+                    color = MaterialTheme.colorScheme.secondary
                 )
             }  // 타이틀
 
@@ -117,7 +115,7 @@ fun MemoDetailContainer(
                     modifier = Modifier
                         .fillParentMaxWidth()
                         .height(1.dp)
-                        .background(Black)
+                        .background(MaterialTheme.colorScheme.secondary)
                 )
             } // 구분선
 
@@ -136,6 +134,7 @@ fun MemoDetailContainer(
                 ) {
                     Text(
                         text = memoItem.contents,
+                        color = Black,
                         modifier = Modifier
                             .padding(vertical = 6.dp, horizontal = 12.dp)
                             .fillParentMaxWidth()
@@ -157,9 +156,9 @@ fun MemoDetailContainer(
                     routeAction.navToModify(index)
                 },
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFFAD9A1)
+                    containerColor = Basic
                 ),
-                border = BorderStroke(1.dp, Black),
+                border = BorderStroke(1.dp, if (isSystemInDarkTheme()) White else Black),
                 modifier = Modifier
                     .weight(1f)
             ) {
@@ -183,9 +182,9 @@ fun MemoDetailContainer(
                     )
                 },
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFFF37878)
+                    containerColor = Primary
                 ),
-                border = BorderStroke(1.dp, Black),
+                border = BorderStroke(1.dp, if (isSystemInDarkTheme()) White else Black),
                 modifier = Modifier
                     .weight(1f)
             ) {
