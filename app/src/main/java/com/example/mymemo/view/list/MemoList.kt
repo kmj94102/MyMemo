@@ -56,14 +56,15 @@ fun MemoListContainer(
         speed = 0.5f
     )
 
-    Box(modifier = Modifier
-        .fillMaxSize()
-        .clickable(
-            indication = null,
-            interactionSource = remember { MutableInteractionSource() }
-        ) {
-            focusManager.clearFocus()
-        }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }
+            ) {
+                focusManager.clearFocus()
+            }
     ) {
 
         LazyColumn(
@@ -145,6 +146,7 @@ fun MemoListContainer(
                     Text(
                         text = stringResource(id = R.string.empty_memo),
                         style = Typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -177,6 +179,7 @@ fun MemoListContainer(
                         }
                         Spacer(modifier = Modifier.height(10.dp))
                     }
+                    Spacer(modifier = Modifier.height(46.dp))
                 } // 리스트
             } // 메모 리스트
         }// LazyColumn
@@ -213,6 +216,7 @@ fun MemoListContainer(
 }
 
 /** 입력창 **/
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InputBar(
     modifier: Modifier = Modifier,
@@ -421,7 +425,6 @@ fun SecretMemoItem(
 }
 
 /** 메모 작성 버튼 **/
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MemoWriteButton(
     modifier: Modifier = Modifier,
@@ -430,7 +433,7 @@ fun MemoWriteButton(
 
     Card(
         shape = CircleShape,
-        border = BorderStroke(1.dp, Black),
+        border = BorderStroke(1.dp, if(isSystemInDarkTheme()) White else Black),
         elevation = CardDefaults.cardElevation(),
         colors = CardDefaults.cardColors(
             containerColor = Primary
