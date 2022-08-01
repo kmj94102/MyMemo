@@ -14,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -42,7 +41,7 @@ fun PasswordDialog(
                     .clip(RoundedCornerShape(10.dp))
                     .background(
                         if (isSystemInDarkTheme()) {
-                            darkDialogBackground
+                            DarkDialogBackground
                         } else {
                             White
                         }
@@ -70,6 +69,8 @@ fun PasswordDialog(
                 InputBar(
                     field = field.value,
                     hint = stringResource(id = R.string.input_password),
+                    hintColor = if (isSystemInDarkTheme()) White80 else Black80,
+                    containerColor = if (isSystemInDarkTheme()) DarkDialogBackground else White,
                     isSingleLine = true,
                     isPassword = true,
                     modifier = Modifier
