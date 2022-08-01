@@ -73,9 +73,6 @@ class MemoWriteViewModel @Inject constructor(
 
     fun event(event: WriteEvent) {
         when(event) {
-            is WriteEvent.SelectMemo -> {
-                selectMemo(event.index)
-            }
             is WriteEvent.WriteTitle -> {
                 _memoItem.value = _memoItem.value.copy(
                     title = event.title

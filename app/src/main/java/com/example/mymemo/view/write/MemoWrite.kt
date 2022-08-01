@@ -11,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.drawscope.Fill
@@ -123,7 +122,7 @@ fun MemoWriteContainer(
                         .fillMaxWidth()
                 ) {
                     ColorGroup.values().forEachIndexed { index, colorGroup ->
-                        SelectColor(index, colorGroup) {
+                        ColorSelector(index, colorGroup) {
                             focusManager.clearFocus()
                             viewModel.event(WriteEvent.ChangeColorGroup(it))
                         }
@@ -213,9 +212,8 @@ fun MemoWriteContainer(
 }
 
 /** 메모 색상 선택 **/
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SelectColor(
+fun ColorSelector(
     index: Int,
     colorGroup: ColorGroup,
     clickListener: (Int) -> Unit
@@ -248,7 +246,7 @@ fun SelectColor(
                     color = Color(colorGroup.subColor),
                     startAngle = 270f,
                     sweepAngle = 180f,
-                    useCenter = true,
+                    useCenter = false,
                     style = Fill
                 )
             }

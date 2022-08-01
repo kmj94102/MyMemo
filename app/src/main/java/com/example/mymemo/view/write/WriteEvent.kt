@@ -1,7 +1,6 @@
 package com.example.mymemo.view.write
 
 sealed class WriteEvent {
-    data class SelectMemo(val index: Long): WriteEvent()
     data class WriteTitle(val title: String): WriteEvent()
     data class WriteContents(val contents: String): WriteEvent()
     data class WritePassword(val password: String): WriteEvent()
